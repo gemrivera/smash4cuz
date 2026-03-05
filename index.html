@@ -118,12 +118,8 @@ function fetchMatches(){
     .catch(err => console.error("Error fetching CSV:", err));
 }
 
-// Fetch initially
+// Fetch only once when page loads
 fetchMatches();
-
-// Refresh every 5 seconds
-setInterval(fetchMatches, 5000);
-
 </script>
 
 </body>
