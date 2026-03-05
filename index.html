@@ -1,59 +1,71 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 <title>Smash For Hope Tournament</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-
-body{
-font-family:Arial;
-background:#f5f5f5;
-padding:30px;
+body {
+    font-family: Arial, sans-serif;
+    background:#f5f5f5;
+    padding:20px;
 }
 
 h1{
-text-align:center;
+    text-align:center;
+    margin-bottom: 10px;
+}
+
+#lastUpdated {
+    text-align:center;
+    font-size: 0.9em;
+    color:#555;
+    margin-bottom: 20px;
 }
 
 table{
-width:100%;
-border-collapse:collapse;
-background:white;
+    width:100%;
+    border-collapse:collapse;
+    background:white;
 }
 
 th,td{
-padding:12px;
-border:1px solid #ddd;
-text-align:center;
+    padding:10px;
+    border:1px solid #ddd;
+    text-align:center;
 }
 
 th{
-background:#111;
-color:white;
+    background:#111;
+    color:white;
 }
 
-.upcoming{
-background:#fff8e1;
-}
+.upcoming{ background:#fff8e1; }
+.playing{ background:#e8f5e9; }
+.finished{ background:#eeeeee; }
 
-.playing{
-background:#e8f5e9;
+@media (max-width: 600px){
+    table, thead, tbody, th, td, tr { display:block; }
+    th { display:none; }
+    td { 
+        display:flex; 
+        justify-content:space-between; 
+        padding:8px; 
+        border:none; 
+        border-bottom:1px solid #ddd;
+    }
+    td::before { 
+        content: attr(data-label); 
+        font-weight:bold; 
+    }
 }
-
-.finished{
-background:#eeeeee;
-}
-
 </style>
 </head>
-
 <body>
 
-<h1>🏸 SMASH FOR HOPE TOURNAMENT</h1>
+<h1>🏸 Smash For Hope Tournament</h1>
+<p id="lastUpdated"></p>
 
 <table id="matches">
-
 <thead>
 <tr>
 <th>Match</th>
@@ -65,53 +77,54 @@ background:#eeeeee;
 <th>Status</th>
 </tr>
 </thead>
-
 <tbody></tbody>
-
 </table>
 
 <script>
-
+// CSV link from your Google Sheet
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXy0B0H9N-ibqRAnGRmEr30aDDwjJS05glDhDbBaFGTG6TDW-ntSqrCwI-X18ojlVAA5EWm-Inik4Z/pub?gid=2051448750&single=true&output=csv";
 
-fetch(sheetURL)
-.then(res => res.text())
-.then(data => {
+// Function to fetch and render matches
+function fetchMatches(){
+    fetch(sheetURL + "&nocache=" + new Date().getTime())
+    .then(res => res.text())
+    .then(data => {
+        const rows = data.split("\n").slice(1);
+        const table = document.querySelector("#matches tbody");
+        table.innerHTML = ""; // clear old rows
 
-const rows = data.split("\n").slice(1);
+        rows.forEach(row => {
+            const cols = row.split(",");
+            if(cols.length < 2) return; // skip empty rows
 
-const table = document.querySelector("#matches tbody");
+            let tr = document.createElement("tr");
+            let statusClass = cols[6]?.toLowerCase().trim() || "upcoming";
+            tr.className = statusClass;
 
-rows.forEach(row => {
+            const labels = ["Match","Category","Team A","Team B","Court","Time","Status"];
+            cols.forEach((col, idx) => {
+                let td = document.createElement("td");
+                td.setAttribute("data-label", labels[idx]);
+                td.innerText = col;
+                tr.appendChild(td);
+            });
 
-const cols = row.split(",");
+            table.appendChild(tr);
+        });
 
-let tr = document.createElement("tr");
+        // Update last updated time
+        document.getElementById("lastUpdated").innerText = "Last updated: " + new Date().toLocaleTimeString();
+    })
+    .catch(err => console.error("Error fetching CSV:", err));
+}
 
-let statusClass = cols[6].toLowerCase();
+// Fetch initially
+fetchMatches();
 
-tr.className = statusClass;
-
-tr.innerHTML = `
-<td>${cols[0]}</td>
-<td>${cols[1]}</td>
-<td>${cols[2]}</td>
-<td>${cols[3]}</td>
-<td>${cols[4]}</td>
-<td>${cols[5]}</td>
-<td>${cols[6]}</td>
-`;
-
-table.appendChild(tr);
-
-});
-
-});
-
-setTimeout(()=>location.reload(),10000);
+// Refresh every 5 seconds
+setInterval(fetchMatches, 5000);
 
 </script>
 
 </body>
-
 </html>
